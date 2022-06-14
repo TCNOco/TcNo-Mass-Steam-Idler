@@ -6,7 +6,18 @@
     <RootNamespace>TcNo_Mass_Steam_Idler</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <SignAssembly>False</SignAssembly>
+    <Authors>TechNobo (Wesley Pyburn)</Authors>
+    <Description>Quickly emulate launching games from a list, for given seconds each.</Description>
+    <Copyright>Copyright © TechNobo (Wesley Pyburn) 2022</Copyright>
+    <RepositoryUrl>https://github.com/TcNobo/TcNo-Mass-Steam-Idler</RepositoryUrl>
+    <Company>TechNobo (Wesley Pyburn)</Company>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Steamworks.NET">
@@ -19,5 +30,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="call &quot;$(ProjectDir)\PostBuild.bat&quot;" />
+  </Target>
 
 </Project>

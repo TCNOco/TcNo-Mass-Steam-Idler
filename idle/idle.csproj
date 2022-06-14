@@ -5,7 +5,17 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Description>For the TcNo-Mass-Steam-Idler. This emulates running a Steam app/game. Relies on steam_appid.txt.</Description>
+    <Copyright>Copyright © TechNobo (Wesley Pyburn) 2022</Copyright>
+    <RepositoryUrl>https://github.com/TcNobo/TcNo-Mass-Steam-Idler</RepositoryUrl>
+    <Company>TechNobo (Wesley Pyburn)</Company>
+    <Authors>TechNobo (Wesley Pyburn)</Authors>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Steamworks.NET">

@@ -43,10 +43,16 @@ while (waitTime is 0)
 }
 
 
-Console.WriteLine("Starting idling!");
+if (!File.Exists("idle.exe"))
+{
+    Console.WriteLine("Can not find idle.exe. Please redownload the program.");
+}
 
+Console.WriteLine("Starting idling!");
+var i = 0;
 foreach (var appId in appIds)
 {
+    i++;
     // Cleanup - Remove spaces from each appId
     var a = appId.Trim();
     File.WriteAllText("steam_appid.txt", a);
@@ -57,10 +63,12 @@ foreach (var appId in appIds)
     pInfo.FileName = "idle.exe";
     pInfo.Arguments = waitTime + " " + appId;
 
-    Console.WriteLine($"Idling: {a}, for 5 seconds...");
+    Console.WriteLine($"[{i}/{appIds.Count}] Idling: {a}, for 5 seconds...");
 
     Process p = Process.Start(pInfo);
     p.WaitForExit();
+
+    Console.WriteLine();
 }
 
 Console.ReadKey();
