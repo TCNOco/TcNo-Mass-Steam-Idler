@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;$(ProjectDir)\PostBuild.bat&quot;" />
+    <Exec Command="if $(ConfigurationName) == Release (&#xD;&#xA; call &quot;$(ProjectDir)\PostBuild.bat&quot;&#xD;&#xA;)" />
   </Target>
 
 </Project>
