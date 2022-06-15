@@ -11,7 +11,7 @@ using System.Net;
 
 
 // Check for updates.
-const string version = "2022-06-15_00";
+const string version = "2022-06-15_01";
 
 HttpClient HClient = new();
 #if DEBUG
@@ -166,9 +166,6 @@ foreach (var appId in appIds)
     var a = appId.Trim();
     Console.WriteLine($"[{i}/{appIds.Count}] Idling: {a}, for {waitTime} seconds...");
 
-    // Cleanup - Remove spaces from each appId
-    File.WriteAllText("steam_appid.txt", a);
-
     // Start game.exe
     string sysFolder = Environment.GetFolderPath(Environment.SpecialFolder.System);
     ProcessStartInfo pInfo = new ProcessStartInfo();
@@ -181,4 +178,5 @@ foreach (var appId in appIds)
     Console.WriteLine();
 }
 
+Console.WriteLine("Press any key to exit.");
 Console.ReadKey();

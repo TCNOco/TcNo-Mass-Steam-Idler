@@ -1,4 +1,5 @@
 ﻿using Steamworks;
+using System.Diagnostics;
 
 int waitTime = 0;
 int appId = 0;
@@ -27,29 +28,25 @@ foreach (var a in arguments)
 
 Console.WriteLine("Idling game: " + appId);
 
+File.WriteAllText("steam_appid.txt", appId.ToString());
+
 var isInit = SteamAPI.Init();
 var announced = 0;
 while (!isInit)
 {
     if (announced == 0)
     {
-        Console.WriteLine("SteamAPI could not connect. After 32, it's usually a timeout.\nWaiting 10 seconds, and trying again.");
+        Console.WriteLine("SteamAPI could not connect.\nWaiting 10 seconds, and trying again.");
         Thread.Sleep(10000);
     }
-    else if (announced == 1)
+    else if (announced >= 1)
     {
-        Console.WriteLine("SteamAPI could not connect. After 32, it's usually a timeout.\nWaiting 30 seconds, and trying again.");
-        Thread.Sleep(30000);
-    }
-    else if (announced == 2)
-    {
-        Console.WriteLine("SteamAPI could not connect. After 32, it's usually a timeout.\nWaiting 1 minutes, and trying again.");
-        Thread.Sleep(60000);
-    }
-    else if (announced >= 3)
-    {
-        Console.WriteLine("SteamAPI could not connect. After 32, it's usually a timeout.\nWaiting 1 minutes, and trying again.");
-        Thread.Sleep(120000);
+        using (StreamWriter w = File.AppendText("appids_failed.txt"))
+        {
+            w.Write($"{appId},");
+        }
+        Console.WriteLine("SteamAPI could not connect again.\nSkipping this AppID. Writing to 'appids_failed.txt'.");
+        break;
     }
 
     announced += 1;
