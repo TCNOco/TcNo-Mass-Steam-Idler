@@ -1,4 +1,7 @@
-# TcNo Mass Steam Idler
+<p align="center">
+  <a href="https://tcno.co/">
+    <img src="/other/img/Banner.png"></a>
+</p>
 
 <p align="center">
   <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/TcNobo/TcNo-Mass-Steam-Idler/total?logo=GitHub&style=flat-square">
