@@ -1,4 +1,10 @@
-﻿using Steamworks;
+﻿// USAGE:
+// Create appids.txt in the same folder as install, with comma and/or line seperated Steam App IDs.
+// This program assumes everything is free, or a free demo.
+// Running the program will then try to steam://install/<AppId> each one to make sure everything is activated.
+// When this is done, the program asks to be restarted, and upon restarting, every AppId is emulated and 'started/run' for X seconds, as defined by user.
+
+using Steamworks;
 using System.Diagnostics;
 
 // Set Working Directory to same as self
@@ -24,6 +30,7 @@ if (appIds.Count == 0)
         Environment.Exit(0);
     }
     appIds = response.Split(',').ToList();
+    File.WriteAllText("appids.txt", string.Join(",", appIds));
 }
 
 // Check if Steam is running
@@ -53,11 +60,11 @@ if (!File.Exists("idle.exe"))
 
 if (!File.Exists("skipcheck"))
 {
-
     File.WriteAllText("steam_appid.txt", "480");
     SteamAPI.Init();
     Console.WriteLine($"Checking of all ({appIds.Count}) games are activated on account (assuming all are demos/free).");
     var invalidIds = new List<string>();
+    var activatedIds = new List<string>();
     var anyPopups = false;
     var vCount = 0;
     foreach (var appId in appIds)
@@ -91,6 +98,10 @@ if (!File.Exists("skipcheck"))
             Process.Start(sActivate);
             Thread.Sleep(5000);
         }
+        else
+        {
+            activatedIds.Add(appId);
+        }
     }
 
     foreach (var iAd in invalidIds)
@@ -99,6 +110,8 @@ if (!File.Exists("skipcheck"))
     }
 
     File.Create("skipcheck");
+    File.WriteAllText("appids_activated.txt", string.Join(",", activatedIds));
+
     Console.WriteLine("Please restart the program. Press Enter to close.");
     Console.ReadLine();
     Environment.Exit(0);
