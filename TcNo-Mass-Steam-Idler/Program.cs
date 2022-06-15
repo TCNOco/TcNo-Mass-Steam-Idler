@@ -6,6 +6,36 @@
 
 using Steamworks;
 using System.Diagnostics;
+using System.Globalization;
+using System.Net;
+
+
+// Check for updates.
+const string version = "2022-06-15_00";
+
+HttpClient HClient = new();
+#if DEBUG
+var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?debug&v=" + version).Result;
+#else
+var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?v=" + version).Result;
+#endif
+
+latestVersion = latestVersion.Replace("\r", "").Replace("\n", "");
+if (DateTime.TryParseExact(latestVersion, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var latestDate))
+{
+    if (DateTime.TryParseExact(version, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var currentDate))
+    {
+        if (!(latestDate.Equals(currentDate) || currentDate.Subtract(latestDate) > TimeSpan.Zero))
+            Console.WriteLine("An update is available! Check GitHub: https://github.com/TcNobo/TcNo-Mass-Steam-Idler/releases/latest.");
+    }
+    else
+        Console.WriteLine("Failed to check for update.");
+}
+else
+    Console.WriteLine("Failed to check for update.");
+
+
+
 
 // Set Working Directory to same as self
 Directory.SetCurrentDirectory(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) ?? "");
@@ -43,12 +73,15 @@ if (!SteamAPI.IsSteamRunning())
 
 
 int waitTime = 0;
-//Console.WriteLine("\nEnter time to idle a game (seconds).\nIf too low, 32 games will idle and then SteamAPI will no longer respond for a while (timeout).");
-Console.WriteLine("\nEnter time to idle each game (seconds).");
-while (waitTime is 0)
+if (File.Exists("skipcheck"))
 {
-    Console.Write("Idle time (Any whole number): ");
-    int.TryParse(Console.ReadLine(), out waitTime);
+    //Console.WriteLine("\nEnter time to idle a game (seconds).\nIf too low, 32 games will idle and then SteamAPI will no longer respond for a while (timeout).");
+    Console.WriteLine("\nEnter time to idle each game (seconds).");
+    while (waitTime is 0)
+    {
+        Console.Write("Idle time (Any whole number): ");
+        int.TryParse(Console.ReadLine(), out waitTime);
+    }
 }
 
 
@@ -97,6 +130,8 @@ if (!File.Exists("skipcheck"))
 
             Process.Start(sActivate);
             Thread.Sleep(5000);
+
+            if (SteamApps.BIsSubscribedApp(new AppId_t(aId))) activatedIds.Add(appId); // NEW: Checks if game activated after trying to. Will keep list up to date.
         }
         else
         {
