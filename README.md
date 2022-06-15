@@ -22,6 +22,8 @@ Either create an `appids.txt` file, and enter Steam AppIDs to idle (comma and/or
 
 The app will also ask for time to idle games. Enter 1 or 2 to quickly idle games, say for the Steam Next Fest (just launch games for a badge), or longer for manual idle.
 
+**While you're here, check out the [TcNo Account Switcher](https://github.com/TcNobo/TcNo-Acc-Switcher). It's super fast, and works with TONS of platforms - not just Steam!**
+
 # How does it work?
 The main program opens `idle.exe` with a time to idle (in ms), as well as an ID. `steam_appid.txt` is set to the current AppID to idle, and automatically works with Steamworks-NET.
 
