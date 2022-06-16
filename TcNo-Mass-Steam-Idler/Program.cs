@@ -141,24 +141,136 @@ if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
     Console.WriteLine();
 
     var invalidIds = new List<string>();
+    var appIdsTodo = new List<string>();
     var activatedIds = new List<string>();
     var anyPopups = false;
     var vCount = 0; // Number of items checked
     var aCount = 0; // Number activated
+
+    Console.WriteLine();
+    Console.WriteLine("You can copy commands into Steam's console to activate a lot of games at once, instead of waiting for each one to finish.");
+    Console.WriteLine("Are you comfortable copy/pasting commands?");
+    Console.Write("Y / N: ");
+    string copyCommands = Console.ReadLine();
+
+    // COPY COMMANDS for user
+    if (copyCommands is not null && copyCommands.ToLower() == "y")
+    {
+        // User is comfortable copy/pasting commands into Steam's console.
+
+        int todoCount = 0;
+        // Clean list of AppIds
+        foreach (var appId in appIds)
+        {
+            vCount++;
+            aCount++;
+            uint aId = 0;
+            uint.TryParse(appId, out aId);
+
+            // Check if AppID is valid
+            if (aId == 0)
+            {
+                Console.WriteLine("Invalid ID: " + appId);
+                invalidIds.Add(appId);
+                appIds.Remove(appId);
+                continue;
+            }
+
+            // Check if AppID is already activated
+            var activated = SteamApps.BIsSubscribedApp(new AppId_t(aId));
+            if (!activated)
+            {
+                todoCount++;
+                appIdsTodo.Add(appId);
+            }
+
+            if (todoCount == 50)
+            {
+                Console.WriteLine("50 AppIds added to list.");
+                break;
+            }
+        }
+
+        var commands = new List<string>();
+        var currentCount = 0;
+        var currentCommand = "";
+        // Add items to list to activate
+        foreach (var a in appIdsTodo)
+        {
+            currentCount++;
+            if (currentCount == 1)
+                currentCommand = "app_license_request ";
+
+            currentCommand += a + " ";
+
+            if (currentCount == 30) // 30th entry
+            {
+                commands.Add(currentCommand);
+                currentCommand = "app_license_request ";
+            }
+        }
+        if (currentCount > 30)
+            commands.Add(currentCommand);
+
+
+
+        Console.WriteLine();
+        Console.WriteLine("The Steam Console will now open. Copy/paste the commands below to activate up to the first 50 games (50 per hour limit)");
+        Console.WriteLine();
+
+        foreach (var c in commands)
+        {
+            Console.WriteLine(c);
+            Console.WriteLine();
+        }
+
+        // Run steam://open/console
+        var sActivate = new ProcessStartInfo();
+        sActivate.FileName = "steam://open/console";
+        sActivate.UseShellExecute = true;
+
+        Process.Start(sActivate);
+
+        Console.WriteLine("");
+        Console.WriteLine("Once commands are run in Steam Console, please restart the program. Press Enter to close.");
+        Console.ReadLine();
+
+
+        File.Create("skipcheck");
+        var newlyActivated = new List<string>();
+        // Check which have been activated, and add to list.
+        foreach (var appId in appIds)
+        {
+            uint aId = 0;
+            uint.TryParse(appId, out aId);
+
+            // Check if AppID is valid
+            if (aId == 0)
+            {
+                Console.WriteLine("Invalid ID: " + appId);
+                invalidIds.Add(appId);
+                appIds.Remove(appId);
+                continue;
+            }
+
+            if (SteamApps.BIsSubscribedApp(new AppId_t(aId)))
+            {
+                newlyActivated.Add(appId);
+            }
+        }
+
+        File.WriteAllText("appids_activated.txt", string.Join(",", newlyActivated));
+        Environment.Exit(0);
+    }
+
+
+    // ELSE: Activate one by one automatically
     foreach (var appId in appIds)
     {
         vCount++;
         aCount++;
         uint aId = 0;
         uint.TryParse(appId, out aId);
-
-        // Check if AppID is valid
-        if (aId == 0)
-        {
-            Console.WriteLine("Invalid ID: " + appId);
-            invalidIds.Add(appId);
-            continue;
-        }
 
         // Check if AppID is already activated
         var activated = SteamApps.BIsSubscribedApp(new AppId_t(aId));
