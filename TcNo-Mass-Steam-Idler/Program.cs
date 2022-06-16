@@ -10,37 +10,62 @@ using System.Globalization;
 using System.Net;
 
 
-const string version = "2022-06-16_00";
+const string version = "2022-06-16_01";
 // Set Working Directory to same as self
 Directory.SetCurrentDirectory(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) ?? "");
 
-// Check for Updates
-try
+
+
+// Automation
+// This makes the activation use the slow method, with no input required.
+// This also requires the appids.txt file to exist and be populated.
+var automatic = false;
+string[] arguments = Environment.GetCommandLineArgs();
+if (arguments.Contains("--auto") || arguments.Contains("-a"))
 {
-    HttpClient HClient = new();
+    if (!File.Exists("appids.txt"))
+    {
+        Console.WriteLine("Can not run in automatic mode. The appids.txt file does not exist.");
+        Environment.Exit(0);
+    }
+    automatic = true;
+    Console.WriteLine("The manager is running in automatic mode.");
+}
+
+
+if (!automatic)
+{
+    // Check for Updates
+    try
+    {
+        HttpClient HClient = new();
 #if DEBUG
-var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?debug&v=" + version).Result;
+        var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?debug&v=" + version).Result;
 #else
-    var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?v=" + version).Result;
+        var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?v=" + version).Result;
 #endif
 
-    latestVersion = latestVersion.Replace("\r", "").Replace("\n", "");
-    if (DateTime.TryParseExact(latestVersion, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var latestDate))
-    {
-        if (DateTime.TryParseExact(version, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var currentDate))
+        latestVersion = latestVersion.Replace("\r", "").Replace("\n", "");
+        if (DateTime.TryParseExact(latestVersion, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var latestDate))
         {
-            if (!(latestDate.Equals(currentDate) || currentDate.Subtract(latestDate) > TimeSpan.Zero))
-                Console.WriteLine("An update is available! Check GitHub: https://github.com/TcNobo/TcNo-Mass-Steam-Idler/releases/latest.");
+            if (DateTime.TryParseExact(version, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var currentDate))
+            {
+                if (!(latestDate.Equals(currentDate) || currentDate.Subtract(latestDate) > TimeSpan.Zero))
+                    Console.WriteLine("An update is available! Check GitHub: https://github.com/TcNobo/TcNo-Mass-Steam-Idler/releases/latest.");
+            }
+            else
+                Console.WriteLine("Failed to check for update.");
         }
         else
             Console.WriteLine("Failed to check for update.");
     }
-    else
-        Console.WriteLine("Failed to check for update.");
-}
-catch (Exception)
-{
-    // Do nothing
+    catch (Exception)
+    {
+        // Do nothing
+    }
+
+    Console.WriteLine("This program is NOT running in automatic mode, and will require user input. This is faster for fewer activations.");
+    Console.WriteLine("See instructions for TcNo-Mass-Steam-Idler-Auto.exe.");
 }
 
 
@@ -52,6 +77,14 @@ var appIds = new List<string>();
 if (File.Exists("appids.txt"))
 {
     appIds = string.Join(",", File.ReadAllLines("appids.txt").ToList()).Replace("\r\n", ",").Replace("\n", ",").Replace(",,", ",").Split(',').ToList();
+}
+
+// Throw error if no appids and in automatic mode.
+if (appIds.Count == 0 && automatic)
+{
+    Console.WriteLine("AUTO MODE: No app ids are in appids.txt. Operation will now pause. Press any key to continue...");
+    Console.ReadKey();
+    Environment.Exit(0);
 }
 
 if (appIds.Count == 0)
@@ -111,10 +144,18 @@ if (File.Exists("skipcheck") || File.Exists("skipcheck.txt"))
 {
     //Console.WriteLine("\nEnter time to idle a game (seconds).\nIf too low, 32 games will idle and then SteamAPI will no longer respond for a while (timeout).");
     Console.WriteLine("\nEnter time to idle each game (seconds).");
-    while (waitTime is 0)
+    if (automatic)
     {
-        Console.Write("Idle time (Any whole number): ");
-        int.TryParse(Console.ReadLine(), out waitTime);
+        Console.WriteLine("AUTO MODE: Idle time set to 5 seconds.");
+        waitTime = 5; // If in auto mode, set time to 3.
+    }
+    else
+    {
+        while (waitTime is 0)
+        {
+            Console.Write("Idle time (Any whole number): ");
+            int.TryParse(Console.ReadLine(), out waitTime);
+        }
     }
 }
 
@@ -146,15 +187,20 @@ if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
     var anyPopups = false;
     var vCount = 0; // Number of items checked
     var aCount = 0; // Number activated
+    string copyCommands = "n";
 
-    Console.WriteLine();
-    Console.WriteLine("You can copy commands into Steam's console to activate a lot of games at once, instead of waiting for each one to finish.");
-    Console.WriteLine("Are you comfortable copy/pasting commands?");
-    Console.Write("Y / N: ");
-    string copyCommands = Console.ReadLine();
+    if (!automatic)
+    {
+        Console.WriteLine();
+        Console.WriteLine("You can copy commands into Steam's console to activate a lot of games at once, instead of waiting for each one to finish.");
+        Console.WriteLine("Are you comfortable copy/pasting commands?");
+        Console.Write("Y / N: ");
+        copyCommands = Console.ReadLine();
+    }
+
 
     // COPY COMMANDS for user
-    if (copyCommands is not null && copyCommands.ToLower() == "y")
+    if (!automatic && copyCommands is not null && copyCommands.ToLower() == "y")
     {
         // User is comfortable copy/pasting commands into Steam's console.
 
@@ -264,7 +310,9 @@ if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
     }
 
 
+    var activatedThisLoop = 0;
     // ELSE: Activate one by one automatically
+    // This is default for automatic mode.
     foreach (var appId in appIds)
     {
         vCount++;
@@ -295,9 +343,16 @@ if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
                 File.WriteAllText("appids_activated.txt", string.Join(",", activatedIds));
 
                 Console.WriteLine("");
+
+                if (automatic)
+                {
+                    Console.WriteLine("AUTO MODE: Manager is restarting app...");
+                    Environment.Exit(50);
+                }
+
                 Console.WriteLine("Please restart the program. Press Enter to close.");
                 Console.ReadLine();
-                Environment.Exit(0);
+                Environment.Exit(1);
             }
 
             Console.WriteLine($"(Checking {vCount}/{appIds.Count}) App {appId} is not activated.");
@@ -310,12 +365,46 @@ if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
             Process.Start(sActivate);
             Thread.Sleep(5000);
 
-            if (SteamApps.BIsSubscribedApp(new AppId_t(aId))) activatedIds.Add(appId); // NEW: Checks if game activated after trying to. Will keep list up to date.
+            if (SteamApps.BIsSubscribedApp(new AppId_t(aId)))
+            {
+                activatedIds.Add(appId); // NEW: Checks if game activated after trying to. Will keep list up to date.
+                activatedThisLoop++;
+            }
+
         }
         else
         {
             // Else, add to list of already activated
             activatedIds.Add(appId);
+        }
+    }
+
+    if (activatedThisLoop < 50)
+    {
+        Console.WriteLine($"{activatedThisLoop} of 50 activated. Trying to activate {activatedThisLoop} x 2 random AppIDs from list, just to make sure.");
+        var unused = appIds;
+        foreach (var used in activatedIds)
+        {
+            unused.Remove(used);
+        }
+
+        var rnd = new Random();
+        var todoCount = (50 - activatedThisLoop) * 2;
+        for (int x = 0; x < todoCount; x++)
+        {
+            var sActivate = new ProcessStartInfo();
+            var currentID = "";
+            if (unused.Count > 50 - todoCount)
+                currentID = unused[rnd.Next(0, unused.Count - 1)];
+            else
+                currentID = unused[unused.Count - x];
+
+            activatedIds.Add(currentID);
+            sActivate.FileName = "steam://install/" + uint.Parse(currentID);
+            sActivate.UseShellExecute = true;
+
+            Process.Start(sActivate);
+            Thread.Sleep(5000);
         }
     }
 
@@ -329,6 +418,12 @@ if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
     // Prompt user to reoopen
     File.Create("skipcheck");
     File.WriteAllText("appids_activated.txt", string.Join(",", activatedIds));
+
+    if (automatic)
+    {
+        Console.WriteLine("AUTO MODE: Manager is restarting app...");
+        Environment.Exit(50);
+    }
 
     Console.WriteLine("Please restart the program. Press Enter to close.");
     Console.ReadLine();
@@ -365,6 +460,12 @@ foreach (var appId in appIds)
     p.WaitForExit();
 
     Console.WriteLine();
+}
+
+if (automatic)
+{
+    Console.WriteLine("AUTO MODE: Manager is restarting app...");
+    Environment.Exit(12);
 }
 
 Console.WriteLine("Press any key to exit.");

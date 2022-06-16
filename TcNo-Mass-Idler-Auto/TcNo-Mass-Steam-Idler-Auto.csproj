@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>TcNo_Mass_Idler_Auto</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>TechNobo (Wesley Pyburn)</Authors>
+    <Company>TechNobo (Wesley Pyburn)</Company>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Copyright>Copyright © TechNobo (Wesley Pyburn) 2022</Copyright>
+    <Description>[Auto mode] Quickly emulate launching games from a list, for given seconds each.</Description>
+    <RepositoryUrl>https://github.com/TcNobo/TcNo-Mass-Steam-Idler</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+  </ItemGroup>
+
+</Project>

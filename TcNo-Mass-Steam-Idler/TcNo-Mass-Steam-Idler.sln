@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32407.343
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcNo-Mass-Steam-Idler", "TcNo-Mass-Steam-Idler.csproj", "{2DA08FBB-AAFA-444B-B961-52D4B5A1DF34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TcNo-Mass-Steam-Idler", "TcNo-Mass-Steam-Idler.csproj", "{2DA08FBB-AAFA-444B-B961-52D4B5A1DF34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcNo-Mass-Steam-Idler-Auto", "..\TcNo-Mass-Idler-Auto\TcNo-Mass-Steam-Idler-Auto.csproj", "{B18752E6-2684-4D33-9A74-273297BE610F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{2DA08FBB-AAFA-444B-B961-52D4B5A1DF34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2DA08FBB-AAFA-444B-B961-52D4B5A1DF34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2DA08FBB-AAFA-444B-B961-52D4B5A1DF34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B18752E6-2684-4D33-9A74-273297BE610F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B18752E6-2684-4D33-9A74-273297BE610F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B18752E6-2684-4D33-9A74-273297BE610F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B18752E6-2684-4D33-9A74-273297BE610F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
