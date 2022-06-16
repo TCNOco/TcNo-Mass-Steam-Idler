@@ -30,6 +30,10 @@ The app will also ask for time to idle games. Enter 1 or 2 to quickly idle games
 # How does it work?
 The main program opens `idle.exe` with a time to idle (in ms), as well as an ID. `steam_appid.txt` is set to the current AppID to idle, and automatically works with Steamworks-NET.
 
+# PLEASE NOTE:
+You can only activate 50 free games/demos per hour. The program does it's best to explain this.
+If the Steam Store starts opening or you receive SteamAPI errors in the console, wait an hour and retry.
+
 #### Disclaimer
 
 ```
