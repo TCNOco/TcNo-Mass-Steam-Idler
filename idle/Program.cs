@@ -36,7 +36,16 @@ while (!isInit)
 {
     if (announced == 0)
     {
+        if (File.Exists("skipcheck"))
+            File.Delete("skipcheck");
+        if (File.Exists("skipcheck.txt"))
+            File.Delete("skipcheck.txt");
+
         Console.WriteLine("SteamAPI could not connect.\nWaiting 10 seconds, and trying again.");
+        Console.WriteLine("This game is either not activated, available, or for another reason blocked for you.");
+        Console.WriteLine("");
+        Console.WriteLine("If you activated a ton of keys, this may not have activated.");
+        Console.WriteLine("Steam limits you to 50 games per hour. Try idling 50, waiting, and trying again.");
         Thread.Sleep(10000);
     }
     else if (announced >= 1)
@@ -54,3 +63,9 @@ while (!isInit)
 }
 
 Thread.Sleep(waitTime);
+
+
+using (StreamWriter w = File.AppendText("appids_idle_complete.txt"))
+{
+    w.Write($"{appId},");
+}
