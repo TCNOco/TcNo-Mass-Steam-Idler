@@ -10,7 +10,7 @@ using System.Globalization;
 using System.Net;
 
 
-const string version = "2022-06-16_01";
+const string version = "2022-06-18_00";
 // Set Working Directory to same as self
 Directory.SetCurrentDirectory(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) ?? "");
 

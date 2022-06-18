@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
 
-const string version = "2022-06-16_01-AUTO";
+const string version = "2022-06-18_00-AUTO";
 // Set Working Directory to same as self
 Directory.SetCurrentDirectory(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) ?? "");
 

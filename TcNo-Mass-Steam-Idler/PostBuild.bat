@@ -5,3 +5,5 @@ start call sign.bat "bin\Release\net6.0\idle.exe"
 start call sign.bat "bin\Release\net6.0\idle.dll"
 start call sign.bat "bin\Release\net6.0\TcNo-Mass-Steam-Idler.exe
 start call sign.bat "bin\Release\net6.0\TcNo-Mass-Steam-Idler.dll"
+start call sign.bat "bin\Release\net6.0\TcNo-Mass-Steam-Idler-Auto.exe
+start call sign.bat "bin\Release\net6.0\TcNo-Mass-Steam-Idler-Auto.dll"
