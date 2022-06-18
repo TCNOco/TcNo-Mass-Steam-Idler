@@ -37,7 +37,7 @@ catch (Exception)
 
 
 Console.WriteLine("Welcome to the TcNo Mass Idler - Automatic mode");
-Console.WriteLine("This mode requires no user input. Activation will be slower, but should be more tha done over an hour.");
+Console.WriteLine("This mode requires no user input. Activation will be slower but should be more than done over an hour.");
 Console.WriteLine("Assuming appids.txt has valid IDs, everything will work well.");
 Console.WriteLine();
 
@@ -58,7 +58,7 @@ while (true)
 
     if (proc.ExitCode == 0)
     {
-        Console.WriteLine("A fatal error occured, and the program can not continue.");
+        Console.WriteLine("A fatal error occurred, and the program couldn't continue.");
         Console.WriteLine("Press any key to exit...");
         Console.ReadKey();
         Environment.Exit(0);
