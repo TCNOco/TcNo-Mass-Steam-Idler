@@ -65,7 +65,7 @@ while (!isInit)
 Thread.Sleep(waitTime);
 
 
-using (StreamWriter w = File.AppendText("appids_idle_complete.txt"))
+using (StreamWriter w = File.AppendText("appids_idled.txt"))
 {
     w.Write($"{appId},");
 }

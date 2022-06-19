@@ -8,339 +8,208 @@ using Steamworks;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
+using static TcNo_Mass_Steam_Idler.Funcs;
 
-
-const string version = "2022-06-18_00";
-// Set Working Directory to same as self
-Directory.SetCurrentDirectory(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) ?? "");
-
-
-
-// Automation
-// This makes the activation use the slow method, with no input required.
-// This also requires the appids.txt file to exist and be populated.
-var automatic = false;
-string[] arguments = Environment.GetCommandLineArgs();
-if (arguments.Contains("--auto") || arguments.Contains("-a"))
+namespace TcNo_Mass_Steam_Idler
 {
-    if (!File.Exists("appids.txt"))
+    public class Program
     {
-        Console.WriteLine("Can not run in automatic mode. The appids.txt file does not exist.");
-        Environment.Exit(0);
-    }
-    automatic = true;
-    Console.WriteLine("The manager is running in automatic mode.");
-}
-
-
-if (!automatic)
-{
-    // Check for Updates
-    try
-    {
-        HttpClient HClient = new();
-#if DEBUG
-        var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?debug&v=" + version).Result;
-#else
-        var latestVersion = HClient.GetStringAsync("https://tcno.co/Projects/MassIdler/api?v=" + version).Result;
-#endif
-
-        latestVersion = latestVersion.Replace("\r", "").Replace("\n", "");
-        if (DateTime.TryParseExact(latestVersion, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var latestDate))
+        public static string version = "2022-06-18_00";
+        public static void Main(string[] args)
         {
-            if (DateTime.TryParseExact(version, "yyyy-MM-dd_mm", null, DateTimeStyles.None, out var currentDate))
+            // Set Working Directory to same as self
+            Directory.SetCurrentDirectory(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) ?? "");
+
+            // Verify all files exist
+            verifySystem();
+
+            // Automation
+            // This makes the activation use the slow method, with no input required.
+            // This also requires the appids.txt file to exist and be populated.
+            var automatic = AutomaticModeCheck();
+
+            if (!automatic)
             {
-                if (!(latestDate.Equals(currentDate) || currentDate.Subtract(latestDate) > TimeSpan.Zero))
-                    Console.WriteLine("An update is available! Check GitHub: https://github.com/TcNobo/TcNo-Mass-Steam-Idler/releases/latest.");
-            }
-            else
-                Console.WriteLine("Failed to check for update.");
-        }
-        else
-            Console.WriteLine("Failed to check for update.");
-    }
-    catch (Exception)
-    {
-        // Do nothing
-    }
-
-    Console.WriteLine("This program is NOT running in automatic mode, and will require user input. This is faster for fewer activations.");
-    Console.WriteLine("See instructions for TcNo-Mass-Steam-Idler-Auto.exe.");
-}
-
-
-
-// Get list of AppIds
-var appIds = new List<string>();
-
-// Read appIds.txt lines into list, if it exists
-if (File.Exists("appids.txt"))
-{
-    appIds = string.Join(",", File.ReadAllLines("appids.txt").ToList()).Replace("\r\n", ",").Replace("\n", ",").Replace(",,", ",").Split(',').ToList();
-}
-
-// Throw error if no appids and in automatic mode.
-if (appIds.Count == 0 && automatic)
-{
-    Console.WriteLine("AUTO MODE: No app ids are in appids.txt. Operation will now pause. Press any key to continue...");
-    Console.ReadKey();
-    Environment.Exit(0);
-}
-
-if (appIds.Count == 0)
-{
-    Console.Write("Please enter a list of AppIDs (Comma seperated): ");
-    var response = Console.ReadLine();
-    if (response is null || response.Trim().Length < 1)
-    {
-        Console.WriteLine("No AppIDs entered. Press any key to exit...");
-        Console.ReadKey();
-        Environment.Exit(0);
-    }
-    appIds = response.Split(',').ToList();
-    File.WriteAllText("appids.txt", string.Join(",", appIds));
-}
-
-
-
-// Skip already idled games
-if (File.Exists("appids_idle_complete.txt"))
-{
-    // If exists: Read everything into array
-    var originalCount = appIds.Count;
-    Console.WriteLine("Removing already idled games...");
-    var complete_appIds = string.Join(",", File.ReadAllLines("appids_idle_complete.txt").ToList()).Replace("\r\n", ",").Replace("\n", ",").Replace(",,", ",").Split(',').ToList();
-
-    // Save list with duplicates removed
-    File.WriteAllText("appids_idle_complete.txt", string.Join(",", complete_appIds));
-
-    // Remove already idled games from todo list
-    foreach (var completedApp in complete_appIds)
-        if (appIds.Contains(completedApp))
-            appIds.Remove(completedApp);
-
-    // Alert user of change
-    if (originalCount != appIds.Count)
-        Console.WriteLine($"Some apps already idled. Old queue length: {originalCount}. New queue length: {appIds.Count}");
-    else
-        Console.WriteLine("No apps already idled are included in this list.");
-}
-
-
-
-// Check if Steam is running
-if (!SteamAPI.IsSteamRunning())
-{
-    Console.WriteLine("Steam not running. Press any key to exit...");
-    Console.ReadKey();
-    Environment.Exit(0);
-}
-
-
-
-// Get idle time from user, if skipcheck doesn't exist
-int waitTime = 0;
-if (File.Exists("skipcheck") || File.Exists("skipcheck.txt"))
-{
-    //Console.WriteLine("\nEnter time to idle a game (seconds).\nIf too low, 32 games will idle and then SteamAPI will no longer respond for a while (timeout).");
-    Console.WriteLine("\nEnter time to idle each game (seconds).");
-    if (automatic)
-    {
-        Console.WriteLine("AUTO MODE: Idle time set to 5 seconds.");
-        waitTime = 5; // If in auto mode, set time to 3.
-    }
-    else
-    {
-        while (waitTime is 0)
-        {
-            Console.Write("Idle time (Any whole number): ");
-            int.TryParse(Console.ReadLine(), out waitTime);
-        }
-    }
-}
-
-
-
-// Verify files
-if (!File.Exists("idle.exe"))
-{
-    Console.WriteLine("Can not find idle.exe. Please redownload the program.");
-}
-
-
-
-// Activate a ton of games
-if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
-{
-    File.WriteAllText("steam_appid.txt", "480");
-    SteamAPI.Init();
-    Console.WriteLine($"Checking of all ({appIds.Count}) games are activated on account (assuming all are demos/free).");
-    Console.WriteLine();
-    Console.WriteLine("If the Steam Store opens, instead of the install window (which you don't click anything on):");
-    Console.WriteLine("You've activated more than 50 in the hour, or the appId is incorrect (not a free demo).");
-    Console.WriteLine("Create 'skipcheck.txt' in the install folder to skip activating games, and wait +- an hour.");
-    Console.WriteLine();
-
-    var invalidIds = new List<string>();
-    var appIdsTodo = new List<string>();
-    var activatedIds = new List<string>();
-    var anyPopups = false;
-    var vCount = 0; // Number of items checked
-    var aCount = 0; // Number activated
-    string copyCommands = "n";
-
-    if (!automatic)
-    {
-        Console.WriteLine();
-        Console.WriteLine("You can copy commands into Steam's console to activate a lot of games at once, instead of waiting for each one to finish.");
-        Console.WriteLine("Are you comfortable copy/pasting commands?");
-        Console.Write("Y / N: ");
-        copyCommands = Console.ReadLine();
-    }
-
-
-    // COPY COMMANDS for user
-    if (!automatic && copyCommands is not null && copyCommands.ToLower() == "y")
-    {
-        // User is comfortable copy/pasting commands into Steam's console.
-
-        int todoCount = 0;
-        // Clean list of AppIds
-        foreach (var appId in appIds)
-        {
-            vCount++;
-            aCount++;
-            uint aId = 0;
-            uint.TryParse(appId, out aId);
-
-            // Check if AppID is valid
-            if (aId == 0)
-            {
-                Console.WriteLine("Invalid ID: " + appId);
-                invalidIds.Add(appId);
-                appIds.Remove(appId);
-                continue;
+                CheckForUpdates(version);
+                Console.WriteLine("This program is NOT running in automatic mode, and will require user input. This is faster for fewer activations.");
+                Console.WriteLine("See instructions for TcNo-Mass-Steam-Idler-Auto.exe.");
             }
 
-            // Check if AppID is already activated
-            var activated = SteamApps.BIsSubscribedApp(new AppId_t(aId));
-            if (!activated)
+            // Is this the second run? Idling games? Get idle time from user
+            int waitTime = 0;
+            if (!IsActivationRun())
             {
-                todoCount++;
-                appIdsTodo.Add(appId);
+                waitTime = GetWaitTime(automatic);
+
+                // Delete skipcheck file, so program checks keys/activations on next launch
+                if (File.Exists("skipcheck"))
+                    File.Delete("skipcheck");
+                if (File.Exists("skipcheck.txt"))
+                    File.Delete("skipcheck.txt");
+
+
+                // Games to idle:
+                // "idle_queue.txt"
             }
 
-            if (todoCount == 50)
+            // Activate a ton of games
+            if (IsActivationRun())
             {
-                Console.WriteLine("50 AppIds added to list.");
-                break;
-            }
-        }
+                // Get list of AppIds
+                // Either from appids.txt, or from user
+                var appIds = GetAppIds();
 
-        var commands = new List<string>();
-        var currentCount = 0;
-        var currentCommand = "";
-        // Add items to list to activate
-        foreach (var a in appIdsTodo)
-        {
-            currentCount++;
-            if (currentCount == 1)
-                currentCommand = "app_license_request ";
-
-            currentCommand += a + " ";
-
-            if (currentCount == 30) // 30th entry
-            {
-                commands.Add(currentCommand);
-                currentCommand = "app_license_request ";
-            }
-        }
-        if (currentCount > 30)
-            commands.Add(currentCommand);
+                // Skip already idled games
+                appIds = RemoveIdledGames(appIds);
 
 
+                WriteSteamAppId("480"); // This is so Steam SteamAPI can connect and check existing activations.
 
-        Console.WriteLine();
-        Console.WriteLine("The Steam Console will now open. Copy/paste the commands below to activate up to the first 50 games (50 per hour limit)");
-        Console.WriteLine();
+                SteamAPI.Init();
+                Console.WriteLine($"Checking of all ({appIds.Count}) games are activated on account (assuming all are demos/free).");
+                Console.WriteLine();
+                Console.WriteLine("If the Steam Store opens, instead of the install window (which you don't click anything on):");
+                Console.WriteLine("- You've activated more than 50 in the hour, or\n- The appId is incorrect (not a free app/demo).");
+                Console.WriteLine("Create 'skipcheck.txt' in the install folder to skip activating games, and idle instead.");
+                Console.WriteLine();
 
-        foreach (var c in commands)
-        {
-            Console.WriteLine(c);
-            Console.WriteLine();
-        }
+                // Check if user can copy/paste codes to activate 50 games.
+                // Because some may be invalid, instead copy 60, of which most will hopefully be activated.
+                string copyCommands = "n";
+                if (!automatic)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("You can copy commands into Steam's console to activate a lot of games at once, instead of waiting for each one to finish.");
+                    Console.WriteLine("Are you comfortable copy/pasting commands?");
+                    Console.Write("Y / N: ");
+                    copyCommands = Console.ReadLine();
+                }
 
-        // Run steam://open/console
-        var sActivate = new ProcessStartInfo();
-        sActivate.FileName = "steam://open/console";
-        sActivate.UseShellExecute = true;
+                var (invalidIds, activatedIds, notActivatedIds) = CheckAppList(appIds);
+                // Check activation status of each appId
+                foreach (var a in appIds)
+                {
+                    var result = IsGameActivated(a);
+                    switch (result)
+                    {
+                        case -1:
+                            // Invalid
+                            invalidIds.Add(a);
+                            continue;
+                        case 0:
+                            notActivatedIds.Add(a);
+                            continue;
+                        case 1:
+                            activatedIds.Add(a);
+                            continue;
+                    }
+                }
 
-        Process.Start(sActivate);
+                // Remove invalid IDs
+                foreach (var a in invalidIds)
+                    appIds.Remove(a);
 
-        Console.WriteLine("");
-        Console.WriteLine("Once commands are run in Steam Console, please restart the program. Press Enter to close.");
-        Console.ReadLine();
+                //// Nothing left to activate? Ask user to restart.
+                //if (notActivatedIds.Count == 0)
+                //{
+                //    Console.WriteLine("All games activated. Restart to idle.");
+                //    CreateSkipcheck();
+                //    PressAnyKeyToClose();
+                //}
+
+                var commands = new List<string>();
+                if (!automatic && copyCommands is not null && copyCommands.ToLower() == "y")
+                {
+                    var command = "app_license_request ";
+                    // Get up to first 60 not activated games
+                    for (int i = 0; i < Math.Min(60, notActivatedIds.Count); i++)
+                    {
+                        command += notActivatedIds[i] + " ";
+
+                        if (i == 29 || i == Math.Min(60, notActivatedIds.Count))
+                        {
+                            // 30th game (or last in list), new command.
+                            commands.Add(command);
+                            command = "app_license_request ";
+                        }
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine("The Steam Console will now open. Copy/paste the commands below to activate up to the first 50 games (50 per hour limit)");
+                    Console.WriteLine();
+
+                    foreach (var c in commands) Console.WriteLine($"{c}\n");
+
+                    StartProcess("steam://open/console");
+
+                    Console.WriteLine("");
+                    Console.WriteLine("Once commands are run in Steam Console, please restart the program. Press Enter to close.");
+                    Console.ReadLine();
+
+                    CreateSkipcheck();
+
+                    var (_, _, gamesToIdle) = CheckAppList(notActivatedIds); // Get newly activated games
+
+                    SaveList(gamesToIdle, "idle_queue.txt");
+                    Console.ReadLine();
+                    Environment.Exit(0);
+                }
 
 
-        File.Create("skipcheck");
-        var newlyActivated = new List<string>();
-        // Check which have been activated, and add to list.
-        foreach (var appId in appIds)
-        {
-            uint aId = 0;
-            uint.TryParse(appId, out aId);
+                // ELSE: Activate one by one automatically
+                // This is default for automatic mode.
+                var loopIterations = 0;
+                var newlyActivatedApps = new List<string>();
+                var notifiedAboutInstall = false;
+                var newlyFailedAppIds = new List<string>();
+                foreach (var a in notActivatedIds)
+                {
+                    loopIterations++;
+                    // If not, and first activation: Let user know what the new window popping up is
+                    if (!notifiedAboutInstall)
+                    {
+                        Console.WriteLine($"\nApps are not activated. Opening install dialogue for unowned apps. Close these if you want. You do NOT need to install games to idle them.\n");
+                        notifiedAboutInstall = true;
+                    }
 
-            // Check if AppID is valid
-            if (aId == 0)
-            {
-                Console.WriteLine("Invalid ID: " + appId);
-                invalidIds.Add(appId);
-                appIds.Remove(appId);
-                continue;
-            }
+                    // If 50 area already activated: There could be a limit, stopping new activations
+                    // When this limit is active, the Steam Store opens, instead of the install dialog.
+                    if (newlyActivatedApps.Count == 50)
+                    {
+                        Console.WriteLine("\nActivated 50 games. Stopping. Steam has a limit of activating 50 games per hour.");
+                        break;
+                    }
 
-            if (SteamApps.BIsSubscribedApp(new AppId_t(aId)))
-            {
-                newlyActivated.Add(appId);
-            }
-        }
+                    Console.WriteLine($"(Checking {loopIterations}/{notActivatedIds.Count}) if app {a} is not activated.");
 
-        File.WriteAllText("appids_activated.txt", string.Join(",", newlyActivated));
-        Environment.Exit(0);
-    }
+                    // Ask Steam to open the install dialog, activating the game
+                    StartProcess("steam://install/" + uint.Parse(a));
+                    Thread.Sleep(5000);
 
+                    if (IsGameActivated(a) == 1)
+                        newlyActivatedApps.Add(a);
+                    else
+                        newlyFailedAppIds.Add(a);
 
-    var activatedThisLoop = 0;
-    // ELSE: Activate one by one automatically
-    // This is default for automatic mode.
-    foreach (var appId in appIds)
-    {
-        vCount++;
-        aCount++;
-        uint aId = 0;
-        uint.TryParse(appId, out aId);
+                    if (newlyFailedAppIds.Count == 10)
+                    {
+                        Console.WriteLine("10 activations failed. You may have reached the 50 activation/hour limit. If not, remove some of these AppIDs:");
+                        foreach (var f in newlyFailedAppIds)
+                            Console.Write($"{f}, ");
+                        break;
+                    }
+                }
 
-        // Check if AppID is already activated
-        var activated = SteamApps.BIsSubscribedApp(new AppId_t(aId));
-        if (!activated)
-        {
-            // If not, and first activation: Let user know what the new window popping up is
-            if (!anyPopups)
-            {
-                Console.WriteLine($"\nApps are not activated. Opening install dialogue for unowned apps. Close these if you want.\n");
-                anyPopups = true;
-            }
+                if (newlyActivatedApps.Count == 0)
+                {
+                    Console.WriteLine("No new games were activated. Wait a while for the 50 game activations/hour limit to refresh.");
+                    if (!automatic) PressAnyKeyToClose();
+                    Environment.Exit(12);
+                }
 
-            // If 50 area already activated: There could be a limit, stopping new activations
-            // When this limit is active, the Steam Store opens, instead of the install dialog.
-            if (aCount == 50)
-            {
-                Console.WriteLine("");
-                Console.WriteLine("Steam has a limit of activating 50 games per hour. Please wait a bit before activating more.");
-                Console.WriteLine("It's time to idle these games now. Please restart this program.");
-
-                File.Create("skipcheck");
-                File.WriteAllText("appids_activated.txt", string.Join(",", activatedIds));
+                // Write games to idle to list, and restart.
+                CreateSkipcheck();
+                SaveList(newlyActivatedApps, "idle_queue.txt");
 
                 Console.WriteLine("");
 
@@ -350,123 +219,51 @@ if (!(File.Exists("skipcheck") || File.Exists("skipcheck.txt")))
                     Environment.Exit(50);
                 }
 
-                Console.WriteLine("Please restart the program. Press Enter to close.");
-                Console.ReadLine();
-                Environment.Exit(1);
+                Console.WriteLine("Please restart the program to start idling.");
+                PressAnyKeyToClose();
             }
 
-            Console.WriteLine($"(Checking {vCount}/{appIds.Count}) App {appId} is not activated.");
 
-            // Ask Steam to open the install dialog, activating the game
-            var sActivate = new ProcessStartInfo();
-            sActivate.FileName = "steam://install/" + uint.Parse(appId);
-            sActivate.UseShellExecute = true;
 
-            Process.Start(sActivate);
-            Thread.Sleep(5000);
-
-            if (SteamApps.BIsSubscribedApp(new AppId_t(aId)))
-            {
-                activatedIds.Add(appId); // NEW: Checks if game activated after trying to. Will keep list up to date.
-                activatedThisLoop++;
-            }
-
-        }
-        else
-        {
-            // Else, add to list of already activated
-            activatedIds.Add(appId);
-        }
-    }
-
-    if (activatedThisLoop < 50)
-    {
-        Console.WriteLine($"{activatedThisLoop} of 50 activated. Trying to activate {activatedThisLoop} x 2 random AppIDs from list, just to make sure.");
-        var unused = appIds;
-        foreach (var used in activatedIds)
-        {
-            unused.Remove(used);
-        }
-
-        var rnd = new Random();
-        var todoCount = (50 - activatedThisLoop) * 2;
-        for (int x = 0; x < todoCount; x++)
-        {
-            var sActivate = new ProcessStartInfo();
-            var currentID = "";
-            if (unused.Count > 50 - todoCount)
-                currentID = unused[rnd.Next(0, unused.Count - 1)];
+            // Start idling games
+            List<string> appsToIdle;
+            if (File.Exists("idle_queue.txt"))
+                appsToIdle = GetAppIds("idle_queue.txt");
             else
-                currentID = unused[unused.Count - x];
+            {
+                Console.WriteLine("No specific idle queue exists ('idle_queue.txt') attempting to idle all app ids.");
+                appsToIdle = GetAppIds();
+            }
 
-            activatedIds.Add(currentID);
-            sActivate.FileName = "steam://install/" + uint.Parse(currentID);
-            sActivate.UseShellExecute = true;
+            Console.WriteLine($"Starting idling! ({appsToIdle.Count})");
+            var current = 0;
+            foreach (var appId in appsToIdle)
+            {
+                current++;
 
-            Process.Start(sActivate);
-            Thread.Sleep(5000);
+                var a = appId.Trim();
+                Console.WriteLine($"[{current}/{appsToIdle.Count}] Idling: {a}, for {waitTime} seconds...");
+
+                // Start game.exe
+                string sysFolder = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                ProcessStartInfo pInfo = new ProcessStartInfo();
+                pInfo.FileName = "idle.exe";
+                pInfo.Arguments = (waitTime * 1000) + " " + appId;
+
+                Process p = Process.Start(pInfo);
+                p.WaitForExit();
+
+                Console.WriteLine();
+            }
+
+            if (automatic)
+            {
+                Console.WriteLine("AUTO MODE: Manager is restarting app...");
+                Environment.Exit(12);
+            }
+
+            Console.WriteLine("Press any key to exit.");
+            Console.ReadKey();
         }
     }
-
-    // Remove invalid AppIDs from master AppID list.
-    foreach (var iAd in invalidIds)
-    {
-        appIds.Remove(iAd);
-    }
-
-    // Write file to tell program to skip activation/check
-    // Prompt user to reoopen
-    File.Create("skipcheck");
-    File.WriteAllText("appids_activated.txt", string.Join(",", activatedIds));
-
-    if (automatic)
-    {
-        Console.WriteLine("AUTO MODE: Manager is restarting app...");
-        Environment.Exit(50);
-    }
-
-    Console.WriteLine("Please restart the program. Press Enter to close.");
-    Console.ReadLine();
-    Environment.Exit(0);
 }
-else
-{
-    // Delete skipcheck file, so program checks keys/activations on next launch
-    if (File.Exists("skipcheck"))
-        File.Delete("skipcheck");
-    if (File.Exists("skipcheck.txt"))
-        File.Delete("skipcheck.txt");
-}
-
-
-
-// Start idling games
-Console.WriteLine($"Starting idling! ({appIds.Count})");
-var i = 0;
-foreach (var appId in appIds)
-{
-    i++;
-
-    var a = appId.Trim();
-    Console.WriteLine($"[{i}/{appIds.Count}] Idling: {a}, for {waitTime} seconds...");
-
-    // Start game.exe
-    string sysFolder = Environment.GetFolderPath(Environment.SpecialFolder.System);
-    ProcessStartInfo pInfo = new ProcessStartInfo();
-    pInfo.FileName = "idle.exe";
-    pInfo.Arguments = (waitTime * 1000) + " " + appId;
-
-    Process p = Process.Start(pInfo);
-    p.WaitForExit();
-
-    Console.WriteLine();
-}
-
-if (automatic)
-{
-    Console.WriteLine("AUTO MODE: Manager is restarting app...");
-    Environment.Exit(12);
-}
-
-Console.WriteLine("Press any key to exit.");
-Console.ReadKey();
