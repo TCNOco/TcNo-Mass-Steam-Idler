@@ -14,7 +14,7 @@ namespace TcNo_Mass_Steam_Idler
 {
     public class Program
     {
-        public static string version = "2022-06-18_00";
+        public static string version = "2022-06-19_00";
         public static void Main(string[] args)
         {
             // Set Working Directory to same as self
@@ -37,22 +37,6 @@ namespace TcNo_Mass_Steam_Idler
 
             // Is this the second run? Idling games? Get idle time from user
             int waitTime = 0;
-            if (!IsActivationRun())
-            {
-                waitTime = GetWaitTime(automatic);
-
-                // Delete skipcheck file, so program checks keys/activations on next launch
-                if (File.Exists("skipcheck"))
-                    File.Delete("skipcheck");
-                if (File.Exists("skipcheck.txt"))
-                    File.Delete("skipcheck.txt");
-
-
-                // Games to idle:
-                // "idle_queue.txt"
-            }
-
-            // Activate a ton of games
             if (IsActivationRun())
             {
                 // Get list of AppIds
@@ -121,18 +105,21 @@ namespace TcNo_Mass_Steam_Idler
                 if (!automatic && copyCommands is not null && copyCommands.ToLower() == "y")
                 {
                     var command = "app_license_request ";
+                    var appIdsAttempted = new List<string>();
                     // Get up to first 60 not activated games
                     for (int i = 0; i < Math.Min(60, notActivatedIds.Count); i++)
                     {
                         command += notActivatedIds[i] + " ";
+                        appIdsAttempted.Add(notActivatedIds[i]);
 
-                        if (i == 29 || i == Math.Min(60, notActivatedIds.Count))
+                        if (i == 29)
                         {
                             // 30th game (or last in list), new command.
                             commands.Add(command);
                             command = "app_license_request ";
                         }
                     }
+                    commands.Add(command);
 
                     Console.WriteLine();
                     Console.WriteLine("The Steam Console will now open. Copy/paste the commands below to activate up to the first 50 games (50 per hour limit)");
@@ -143,16 +130,14 @@ namespace TcNo_Mass_Steam_Idler
                     StartProcess("steam://open/console");
 
                     Console.WriteLine("");
-                    Console.WriteLine("Once commands are run in Steam Console, please restart the program. Press Enter to close.");
-                    Console.ReadLine();
+                    Console.WriteLine("Once commands are run in Steam Console, please restart the program.");
 
                     CreateSkipcheck();
 
-                    var (_, _, gamesToIdle) = CheckAppList(notActivatedIds); // Get newly activated games
+                    var (_, _, gamesToIdle) = CheckAppList(appIdsAttempted); // Get newly activated games
 
                     SaveList(gamesToIdle, "idle_queue.txt");
-                    Console.ReadLine();
-                    Environment.Exit(0);
+                    PressAnyKeyToClose();
                 }
 
 
@@ -231,9 +216,26 @@ namespace TcNo_Mass_Steam_Idler
                 appsToIdle = GetAppIds("idle_queue.txt");
             else
             {
-                Console.WriteLine("No specific idle queue exists ('idle_queue.txt') attempting to idle all app ids.");
+                Console.WriteLine("No specific idle queue exists ('idle_queue.txt') Checking which AppIds are registered to account.\n\n");
                 appsToIdle = GetAppIds();
+                WriteSteamAppId("480");
+                SteamAPI.Init();
+                Thread.Sleep(200);
+                var (_, gamesToIdle, _) = CheckAppList(appsToIdle); // Get newly activated games
+
+                SaveList(gamesToIdle, "idle_queue.txt");
+                Console.WriteLine("\n\nCreated idle_queue.txt. Please restart the app.");
+                if (!automatic) PressAnyKeyToClose();
+                else Environment.Exit(50);
             }
+
+            waitTime = GetWaitTime(automatic);
+
+            // Delete skipcheck file, so program checks keys/activations on next launch
+            if (File.Exists("skipcheck"))
+                File.Delete("skipcheck");
+            if (File.Exists("skipcheck.txt"))
+                File.Delete("skipcheck.txt");
 
             Console.WriteLine($"Starting idling! ({appsToIdle.Count})");
             var current = 0;

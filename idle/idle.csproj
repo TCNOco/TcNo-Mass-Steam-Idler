@@ -11,6 +11,7 @@
     <RepositoryUrl>https://github.com/TcNobo/TcNo-Mass-Steam-Idler</RepositoryUrl>
     <Company>TechNobo (Wesley Pyburn)</Company>
     <Authors>TechNobo (Wesley Pyburn)</Authors>
+    <BaseOutputPath>$(SolutionDir)\bin\</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

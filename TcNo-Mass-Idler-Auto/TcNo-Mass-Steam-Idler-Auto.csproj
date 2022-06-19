@@ -12,6 +12,7 @@
     <Copyright>Copyright © TechNobo (Wesley Pyburn) 2022</Copyright>
     <Description>[Auto mode] Quickly emulate launching games from a list, for given seconds each.</Description>
     <RepositoryUrl>https://github.com/TcNobo/TcNo-Mass-Steam-Idler</RepositoryUrl>
+    <BaseOutputPath>$(SolutionDir)\bin\</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

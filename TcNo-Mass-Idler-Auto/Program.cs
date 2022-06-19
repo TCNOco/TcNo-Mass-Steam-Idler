@@ -6,7 +6,7 @@ namespace TcNo_Mass_Idler_Auto
 {
     public class Program
     {
-        public static string version = "2022-06-18_00-AUTO";
+        public static string version = "2022-06-19_00-AUTO";
         public static void Main(string[] args)
         {
             // Set Working Directory to same as self
@@ -57,6 +57,8 @@ namespace TcNo_Mass_Idler_Auto
                     maxTime = 9999999;
                     Thread.Sleep(60 * 60 * 1000);
                 }
+
+                Console.WriteLine("A");
             }
 
         }
