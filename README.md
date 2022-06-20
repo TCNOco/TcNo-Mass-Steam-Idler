@@ -38,6 +38,9 @@ When you've run through everything in your `appids.txt` file, create `skipcheck.
 You can only activate 50 free games/demos per hour. The program does it's best to explain this.
 If the Steam Store starts opening or you receive SteamAPI errors in the console, wait an hour and retry.
 
+## Want to get rid of the demos in your account?
+After adding thousands of demos and free games you likely want to remove them. Simply check the guide [HERE](https://github.com/TcNobo/TcNo-Mass-Steam-Idler/blob/main/Mass_Remove.md) to see what you need to do - There's a video included too!
+
 #### Disclaimer
 
 ```
