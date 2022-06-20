@@ -31,7 +31,7 @@ for (let row of rows){
         packageId = /javascript:\s*RemoveFreeLicense\s*\(\s*(\d+)/.exec(cell.innerHTML);
 
         if (packageId !== null) {
-			// By: https://tcno.co/
+            // By: https://tcno.co/
             i++;
             console.log(`[${i}] Removing: ${packageId[1]} - ${cell.innerHTML.split("</div>")[1].trim()}`);
             if (!appIds.includes(packageId[1]))appIds.push(packageId[1]);
@@ -70,7 +70,7 @@ function removeNextPackage(appIds, i) {
       "mode": "cors",
       "credentials": "include"
     }).then((response) => {
-		// By: https://tcno.co/
+        // By: https://tcno.co/
         i++;
         if (response.status !== 200){
             console.log(`Error: ${response.status} - ${response.statusText}`)
