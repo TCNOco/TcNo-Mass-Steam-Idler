@@ -1,6 +1,13 @@
 ## Mass remove Steam Demos/Free games
 If you've activated a ton of demos for Steam sales, or anything else, this quick guide will help you automatically remove all of them really quickly! Just +- a second each.
 
+#### Video Guide
+<p align="center">
+	<a href="https://youtu.be/bikDH7DQKgs">
+	    <img alt="Website" src="https://i.imgur.com/vwGmRBX.png" target="_blank" height=300">
+	</a>
+</p>
+												
 ### 1: Open Steam and the Console
 Head to https://store.steampowered.com/account/licenses/.
 Hit `Ctrl+Shift+I`, `F12` or Right-Click and choose Inspect.
