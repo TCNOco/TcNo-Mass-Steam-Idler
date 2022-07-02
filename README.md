@@ -19,7 +19,7 @@
   <img alt="Download latest" src="/other/img/DownloadLatestNEW.png" height=70"></a>
 </p>
   
-**Quickly emulate launching games from a list, for given seconds each.**.
+**Quickly emulate launching games from a list, for given seconds each.**
 
 Either create an `appids.txt` file, and enter Steam AppIDs to idle (comma and/or line seperated), or launch `TcNo-Mass-Account-Idler.exe` and enter AppIDs seperately.
 
