@@ -69,25 +69,21 @@ function removeNextPackage(appIds, i) {
         "method": "POST",
         "mode": "cors",
         "credentials": "include"
-
-//Moved going to next id if successful on this one
-    }).then((response) => {
+    }).then(response => {
         if (response.status !== 200) {
-            console.log(`Error: ${response.status} - ${response.statusText}`);
-            return;
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
-// Added Check for ratelimiting
-    }).then((data) => {
+    }).then(data => {
         if (data && data.success === 84) {
             console.log(`Rate limit exceeded. Retrying after delay...`);
-            setTimeout(() => removeNextPackage(appIds, i), 600000); // Retry after 10 mins
+            setTimeout(() => removeNextPackage(appIds, i), 60000); // Retry after 60 seconds
         } else {
             console.log(`Removed: ${appIds[i]} (${i + 1}/${appIds.length})`);
-            removeNextPackage(appIds, ++i);
+            removeNextPackage(appIds, i + 1);
         }
-    }).catch((error) => {
-        console.log(`Network error: ${error}`);
+    }).catch(error => {
+        console.error(`Network or parsing error: ${error}`);
         setTimeout(() => removeNextPackage(appIds, i), 60000); // Retry after 60 seconds on network error
     });
 }
