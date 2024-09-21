@@ -110,7 +110,7 @@ function removeNextPackage(appIds, i) {
     }).then(data => {
         if (data && data.success === 84) {
             console.log(`Rate limit exceeded. Retrying after delay...`);
-            setTimeout(() => removeNextPackage(appIds, i), 60000); // Retry after 60 seconds
+            setTimeout(() => removeNextPackage(appIds, i), 600000); // Retry after 10 minutes
         } else {
             console.log(`Removed: ${appIds[i]} (${i + 1}/${appIds.length})`);
             removeNextPackage(appIds, i + 1);
