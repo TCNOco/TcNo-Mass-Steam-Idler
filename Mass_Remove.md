@@ -39,6 +39,40 @@ for (let row of rows){
     }
 }
 ```
+To remove items between date range, if you want to remove from a single day keep both dates the same, Uncomment for line 23 and 32 for just removeing demos in the date range
+```js
+var appIds = [];
+var rows = document.getElementsByClassName("account_table")[0].rows;
+
+// Set the start and end date range for filtering (format: 'DD MMM, YYYY')
+const startDate = new Date("01 Jan, 2023");  // Example: 1st Jan 2023
+const endDate = new Date("31 Dec, 2024");    // Example: 31st Dec 2024
+
+let i = 0;
+
+for (let row of rows) {
+    var dateCell = row.cells[0]; // The first cell contains the date
+    var cell = row.cells[1];     // The second cell contains the package details
+
+    // Extract the license date and convert it to a JavaScript Date object
+    var licenseDateStr = dateCell.textContent.trim();
+    var licenseDate = new Date(licenseDateStr);
+
+    // Check if the license date is within the specified date range
+    if (licenseDate >= startDate && licenseDate <= endDate) {
+        // Extract the packageId for licenses within the date range
+        // if (/\b(?:trailer|teaser|demo|cinematic|pegi|esrb)\b/i.test(cell.textContent)) {
+        let packageId = /javascript:\s*RemoveFreeLicense\s*\(\s*(\d+)/.exec(cell.innerHTML);
+
+            if (packageId !== null) {
+                i++;
+                console.log(`[${i}] Removing: ${packageId[1]} - ${cell.innerHTML.split("</div>")[1].trim()} (Date: ${licenseDateStr})`);
+                if (!appIds.includes(packageId[1])) appIds.push(packageId[1]);
+                }
+        // }
+    }
+}
+```
 
 ### 3: Removing games automatically
 Clicking the Remove button takes a lot of time. Instead, once you have populated `appIds`, run the following command to remove all the AppIds from the list from your account.
@@ -77,7 +111,7 @@ function removeNextPackage(appIds, i) {
     }).then(data => {
         if (data && data.success === 84) {
             console.log(`Rate limit exceeded. Retrying after delay...`);
-            setTimeout(() => removeNextPackage(appIds, i), 60000); // Retry after 60 seconds
+            setTimeout(() => removeNextPackage(appIds, i), 180000); // Retry after 180 seconds
         } else {
             console.log(`Removed: ${appIds[i]} (${i + 1}/${appIds.length})`);
             removeNextPackage(appIds, i + 1);
