@@ -39,7 +39,7 @@ for (let row of rows){
     }
 }
 ```
-To remove items between date range, if you want to remove from a single day keep both dates the same, Uncomment for line 23 and 32 for just removeing demos in the date range
+To remove items between date range, if you want to remove from a single day keep both dates the same, Uncomment for line 23 and 32 for just removing demos in the date range
 ```js
 var appIds = [];
 var rows = document.getElementsByClassName("account_table")[0].rows;
